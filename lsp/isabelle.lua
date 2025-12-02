@@ -1,6 +1,6 @@
 local utils = require('utils')
 
-local config = type(vim.g.isabelle_lsp) == 'function' and vim.g.isabelle_lsp() or vim.g.isabelle_lsp or {}
+local config = vim.tbl_deep_extend('force', require('defaults'), vim.g.isabelle_lsp or {})
 
 local function get_uri_from_fname(fname)
     return vim.uri_from_fname(vim.fs.normalize(fname))
@@ -157,7 +157,7 @@ local cmd = utils.init_cmd(config)
 local output_buffer
 local state_buffers = {}
 
----@type vim.lsp.Config
+--- @type vim.lsp.Config
 return {
     cmd = cmd,
     filetypes = { 'isabelle' },
@@ -266,7 +266,7 @@ return {
         -- otherwise reuse it
         if not output_buffer then
             -- create a new scratch buffer for output & state
-            output_buffer = vim.api.nvim_create_buf(true, true)
+            output_buffer = vim.api.nvim_create_buf(false, true)
             vim.api.nvim_buf_set_name(output_buffer, '--OUTPUT--')
             vim.api.nvim_set_option_value('filetype', 'isabelle_output', { buf = output_buffer })
 
@@ -287,7 +287,7 @@ return {
                 buffer = output_buffer,
                 callback = function(_)
                     if #vim.api.nvim_list_wins() == 1 then
-                        vim.cmd 'quit'
+                        vim.cmd('quit')
                     end
                 end,
             })

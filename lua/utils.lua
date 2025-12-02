@@ -2,7 +2,7 @@ local M = {}
 
 M.is_windows = vim.loop.os_uname().version:match 'Windows'
 
----@type fun(isabelle-lsp.Config):string[]
+--- @type fun(config: isabelle-lsp.Config): string[]
 M.init_cmd = function(config)
     local cmd
 
@@ -66,6 +66,7 @@ M.init_cmd = function(config)
     return cmd
 end
 
+--- @type fun(config: isabelle-lsp.Config): table, integer
 M.init_namespaces = function(config)
     local hl_group_namespace_map = {}
     -- create namespaces for syntax highlighting

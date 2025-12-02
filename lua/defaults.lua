@@ -1,4 +1,5 @@
 -- setting false means "don't do any highlighting for this group"
+--- @type table<string, string | boolean>
 local hl_group_map = {
     ['background_unprocessed1'] = false,
     ['background_running1'] = false,
@@ -47,17 +48,17 @@ local hl_group_map = {
     ['foreground_antiquoted'] = false,
 }
 
----@class isabelle-lsp.Config
----@field isabelle-path? string
----@field vsplit? boolean
----@field sh_path? string
----@field unicode_symbols_output? boolean
----@field unicode_symbols_edits? boolean
----@field hl_group_map? table
----@field log? string?
----@field verbose? boolean
+--- @class isabelle-lsp.Config
+--- @field isabelle_path? string
+--- @field vsplit? boolean
+--- @field sh_path? string
+--- @field unicode_symbols_output? boolean
+--- @field unicode_symbols_edits? boolean
+--- @field hl_group_map? table<string, string | boolean>
+--- @field log? string?
+--- @field verbose? boolean
 
----@type isabelle-lsp.Config
+--- @type isabelle-lsp.Config
 local default_config = {
     isabelle_path = 'isabelle',
     vsplit = false,
