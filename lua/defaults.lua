@@ -47,6 +47,17 @@ local hl_group_map = {
     ['foreground_antiquoted'] = false,
 }
 
+---@class isabelle-lsp.Config
+---@field isabelle-path? string
+---@field vsplit? boolean
+---@field sh_path? string
+---@field unicode_symbols_output? boolean
+---@field unicode_symbols_edits? boolean
+---@field hl_group_map? table
+---@field log? string?
+---@field verbose? boolean
+
+---@type isabelle-lsp.Config
 local default_config = {
     isabelle_path = 'isabelle',
     vsplit = false,
