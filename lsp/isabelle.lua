@@ -35,13 +35,6 @@ local function send_notification(client, method, payload)
     send_request(client, method, payload, function(_) end)
 end
 
-local function send_notification_to_all(method, payload)
-    local clients = vim.lsp.get_clients({ name = 'isabelle' })
-    for _, client in ipairs(clients) do
-        send_notification(client, method, payload)
-    end
-end
-
 -- assumes `client` is the client associated with the current window's buffer
 local function caret_update(client)
     local bufnr = vim.api.nvim_get_current_buf()
