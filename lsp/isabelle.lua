@@ -11,7 +11,7 @@ local function find_buffer_by_uri(uri)
         local bufname = vim.fn.bufname(buf.bufnr)
         -- get the full path of the buffer's file
         -- bufname will typically only be the filename
-        local fname = vim.fn.fnamemodify(bufname, ":p")
+        local fname = vim.fn.fnamemodify(bufname, ':p')
         local bufuri = get_uri_from_fname(fname)
 
         if bufuri == uri then
@@ -50,7 +50,7 @@ local function caret_update(client)
     local line_s = vim.api.nvim_buf_get_lines(bufnr, line, line + 1, false)[1]
     -- the extra space is so that it still gives us a correct column
     -- even if the cursor is in insert mode at the end of the line
-    col = vim.fn.charidx(line_s .. " ", col)
+    col = vim.fn.charidx(line_s .. ' ', col)
 
     send_notification(client, 'caret_update', { uri = uri, line = line, character = col })
 end
@@ -85,11 +85,11 @@ end
 local function convert_symbols(client, bufnr, text)
     send_request(
         client,
-        "symbols_convert_request",
+        'symbols_convert_request',
         { text = text, unicode = config.unicode_symbols_edits },
         function(t)
             local lines = {}
-            for s in t.text:gmatch("([^\r\n]*)\n?") do
+            for s in t.text:gmatch('([^\r\n]*)\n?') do
                 table.insert(lines, s)
             end
             vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
@@ -128,7 +128,7 @@ local function state_init(client, state_buffers)
         local id = result.state_id
 
         local new_buf = vim.api.nvim_create_buf(true, true)
-        vim.api.nvim_buf_set_name(new_buf, "--STATE-- " .. id)
+        vim.api.nvim_buf_set_name(new_buf, '--STATE-- ' .. id)
         vim.api.nvim_set_option_value('filetype', 'isabelle_output', { buf = new_buf })
 
         vim.api.nvim_buf_set_lines(new_buf, 0, -1, false, {})
@@ -168,7 +168,7 @@ return {
 
             local lines = {}
             -- this regex makes sure that empty lines are still kept
-            for s in params.content:gmatch("([^\r\n]*)\n?") do
+            for s in params.content:gmatch('([^\r\n]*)\n?') do
                 table.insert(lines, s)
             end
             vim.api.nvim_buf_set_lines(output_buffer, 0, -1, false, lines)
@@ -181,7 +181,7 @@ return {
 
                 -- if hl_group is nil, it means the hl_group_map doesn't know about this group
                 if hl_group == nil then
-                    vim.notify("Could not find hl_group " .. dec.type .. ".")
+                    vim.notify('Could not find hl_group ' .. dec.type .. '.')
                     goto continue
                 end
 
@@ -197,7 +197,7 @@ return {
             local bufnr = find_buffer_by_uri(params.uri)
 
             if not bufnr then
-                vim.notify("Could not find buffer for " .. params.uri .. ".")
+                vim.notify('Could not find buffer for ' .. params.uri .. '.')
                 return
             end
 
@@ -208,7 +208,7 @@ return {
                 -- if id is nil, it means the hl_group_map doesn't know about this group
                 if not syn_id then
                     -- in particular, hl_group is nil here too
-                    vim.notify("Could not find hl_group " .. entry.type .. ".")
+                    vim.notify('Could not find hl_group ' .. entry.type .. '.')
                     goto continue
                 end
 
@@ -227,7 +227,7 @@ return {
 
             local lines = {}
             -- this regex makes sure that empty lines are still kept
-            for s in params.content:gmatch("([^\r\n]*)\n?") do
+            for s in params.content:gmatch('([^\r\n]*)\n?') do
                 table.insert(lines, s)
             end
             vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
@@ -241,7 +241,7 @@ return {
                 -- if hl_group is nil, it means the hl_group_map doesn't know about this group
                 if hl_group == nil then
                     -- in particular, hl_group is nil here too
-                    vim.notify("Could not find hl_group " .. dec.type .. ".")
+                    vim.notify('Could not find hl_group ' .. dec.type .. '.')
                     goto continue
                 end
 
@@ -255,7 +255,7 @@ return {
         end,
     },
     on_attach = function(client, bufnr)
-        vim.api.nvim_create_autocmd({ "CursorMoved", "CursorMovedI" }, {
+        vim.api.nvim_create_autocmd({ 'CursorMoved', 'CursorMovedI' }, {
             buffer = bufnr,
             callback = function(_)
                 caret_update(client)
@@ -267,7 +267,7 @@ return {
         if not output_buffer then
             -- create a new scratch buffer for output & state
             output_buffer = vim.api.nvim_create_buf(true, true)
-            vim.api.nvim_buf_set_name(output_buffer, "--OUTPUT--")
+            vim.api.nvim_buf_set_name(output_buffer, '--OUTPUT--')
             vim.api.nvim_set_option_value('filetype', 'isabelle_output', { buf = output_buffer })
 
             -- set the content of the output buffer
@@ -283,11 +283,11 @@ return {
             -- make the output buffer automatically quit
             -- if it's the last window
             -- TODO doesn't work in many cases
-            vim.api.nvim_create_autocmd({ "BufEnter" }, {
+            vim.api.nvim_create_autocmd({ 'BufEnter' }, {
                 buffer = output_buffer,
                 callback = function(_)
                     if #vim.api.nvim_list_wins() == 1 then
-                        vim.cmd "quit"
+                        vim.cmd 'quit'
                     end
                 end,
             })
@@ -310,7 +310,7 @@ return {
         end, { desc = 'Open a State Panel' })
 
         vim.api.nvim_buf_create_user_command(bufnr, 'SymbolsRequest', function()
-            send_notification(client, "symbols_request", {})
+            send_notification(client, 'symbols_request', {})
         end, {})
 
         vim.api.nvim_buf_create_user_command(bufnr, 'SymbolsConvert', function()

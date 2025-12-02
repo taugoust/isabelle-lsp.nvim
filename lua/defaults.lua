@@ -29,7 +29,7 @@ local hl_group_map = {
     ['text_overview_error'] = false,
     ['text_overview_warning'] = false,
     ['dotted_writeln'] = false,
-    ['dotted_warning'] = "DiagnosticWarn",
+    ['dotted_warning'] = 'DiagnosticWarn',
     ['dotted_information'] = false,
     ['spell_checker'] = 'Underlined',
     -- currently unused by isabelle-emacs
