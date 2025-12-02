@@ -86,7 +86,7 @@ local function convert_symbols(client, bufnr, text)
     send_request(
         client,
         "symbols_convert_request",
-        { text = text, unicode = true },
+        { text = text, unicode = config.unicode_symbols_edits },
         function(t)
             local lines = {}
             for s in t.text:gmatch("([^\r\n]*)\n?") do
