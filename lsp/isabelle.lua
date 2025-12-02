@@ -134,13 +134,7 @@ local function state_init(client, state_buffers)
         vim.api.nvim_buf_set_lines(new_buf, 0, -1, false, {})
 
         -- place the state window
-        vim.api.nvim_command('vsplit')
-        vim.api.nvim_command('wincmd l')
-
-        vim.api.nvim_set_current_buf(new_buf)
-
-        -- put focus back on main buffer
-        vim.api.nvim_command('wincmd h')
+        vim.api.nvim_open_win(new_buf, false, { split = 'right' })
 
         local min_width = get_min_width(new_buf)
         set_state_margin(client, id, min_width)
@@ -158,7 +152,7 @@ local function state_init(client, state_buffers)
 end
 
 local hl_group_namespace_map, output_namespace = utils.init_namespaces(config)
-local cmd = utils.init_cmd()
+local cmd = utils.init_cmd(config)
 
 local output_buffer
 local state_buffers = {}
@@ -279,19 +273,16 @@ return {
             -- set the content of the output buffer
             vim.api.nvim_buf_set_lines(output_buffer, 0, -1, false, {})
 
-            -- TODO replace with nvim_open_win()
             -- place the output window
             if config.vsplit then
-                vim.api.nvim_command('vsplit')
-                vim.api.nvim_command('wincmd l')
+                vim.api.nvim_open_win(output_buffer, false, { split = 'right' })
             else
-                vim.api.nvim_command('split')
-                vim.api.nvim_command('wincmd j')
+                vim.api.nvim_open_win(output_buffer, false, { split = 'below' })
             end
-            vim.api.nvim_set_current_buf(output_buffer)
 
             -- make the output buffer automatically quit
             -- if it's the last window
+            -- TODO doesn't work in many cases
             vim.api.nvim_create_autocmd({ "BufEnter" }, {
                 buffer = output_buffer,
                 callback = function(_)
@@ -300,13 +291,6 @@ return {
                     end
                 end,
             })
-
-            -- put focus back on main buffer
-            if config.vsplit then
-                vim.api.nvim_command('wincmd h')
-            else
-                vim.api.nvim_command('wincmd k')
-            end
 
             local min_width = get_min_width(output_buffer)
             set_output_margin(client, min_width)
