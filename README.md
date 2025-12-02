@@ -1,14 +1,14 @@
-# isabelle-lsp.nvim \[WIP\]
+# isabelle-lsp.nvim
 
 ![isabelle-lsp.nvim](https://github.com/user-attachments/assets/19c7780e-5e30-4129-978b-4bff5e18c39f)
 
-Isabelle LSP configuration for [nvim-lspconfig](https://github.com/neovim/nvim-lspconfig).
+[Isabelle](https://isabelle.in.tum.de/) LSP configuration for [Neovim](https://neovim.io/).
 
 Neovim does not have an isabelle filetype, so you have to add one yourself or install a plugin which introduces one (like [isabelle-syn.nvim](https://github.com/Treeniks/isabelle-syn.nvim)). See [Quickstart](#Quickstart) on how to do so.
 
 Mind you also that the language server needs a little bit before it starts up. When you open a `.thy` file, it will start the language server in the background and open an output panel once it's running.
 
-This plugin currently requires changeset [aa77be3e8329](https://isabelle.sketis.net/repos/isabelle/rev/aa77be3e8329) or later of Isabelle to work.
+This plugin requires changeset [aa77be3e8329](https://isabelle.sketis.net/repos/isabelle/rev/aa77be3e8329) or later of Isabelle to work.
 
 ## Install
 
@@ -17,19 +17,13 @@ This plugin currently requires changeset [aa77be3e8329](https://isabelle.sketis.
 Install with your package manager of choice, e.g. [lazy.nvim](https://github.com/folke/lazy.nvim):
 ```lua
 require('lazy').setup({
-    {
-        'Treeniks/isabelle-lsp.nvim',
-        branch = 'isabelle-language-server',
-        dependencies = {
-            'neovim/nvim-lspconfig'
-        },
-    },
+    'Treeniks/isabelle-lsp.nvim',
 })
 ```
 
 ### Isabelle
 
-In the context of my bachelor's thesis, I have contributed several changes to the Isabelle language server. These have been upstreamed as of 2024-10-02, however they are not part of any Isabelle release yet. You will need changeset [aa77be3e8329](https://isabelle.sketis.net/repos/isabelle/rev/aa77be3e8329) or later. If you also want these changes to work within Isabelle/VSCode, you'll need at least changeset [e0327a38bf4d](https://isabelle.sketis.net/repos/isabelle/rev/e0327a38bf4d). You can clone the Isabelle repository with Mercurial from <https://isabelle-dev.sketis.net/source/isabelle/>. There is also a [GitHub mirror](https://github.com/isabelle-prover/mirror-isabelle) if you prefer to use git.
+In the context of my bachelor's thesis, I have contributed several changes to the Isabelle language server. These have been upstreamed as of 2024-10-02. You will need changeset [aa77be3e8329](https://isabelle.sketis.net/repos/isabelle/rev/aa77be3e8329) or later. If you also want these changes to work within Isabelle/VSCode, you'll need at least changeset [e0327a38bf4d](https://isabelle.sketis.net/repos/isabelle/rev/e0327a38bf4d). You can clone the Isabelle repository with Mercurial from <https://isabelle-dev.sketis.net/source/isabelle/>. There is also a [GitHub mirror](https://github.com/isabelle-prover/mirror-isabelle) if you prefer to use git.
 
 1. Clone [Isabelle Repository](https://isabelle-dev.sketis.net/source/isabelle/):
     ```sh
@@ -60,26 +54,25 @@ In the context of my bachelor's thesis, I have contributed several changes to th
     })
     ```
     Alternatively you can install a plugin that creates this filetype for you, like [isabelle-syn.nvim](https://github.com/Treeniks/isabelle-syn.nvim) (which will also include some static syntax highlighting).
-2. Add the isabelle LSP to your LSP configurations:
+2. The language server configuration should be available simply by loading the plugin, so you just need to enable it:
     ```lua
-    require('isabelle-lsp').setup({
-        isabelle_path = '/path/to/isabelle/bin/isabelle',
-    })
-    ```
-    The `isabelle_path` line if optional if the `isabelle` binary is already in your PATH.
-3. Enable the language server:
-    ```lua
-    local lspconfig = require('lspconfig')
-    lspconfig.isabelle.setup({})
+    vim.lsp.enable('isabelle')
     ```
 
 ## Configuration
 
-Refer to [`nvim-lspconfig`](https://github.com/neovim/nvim-lspconfig)'s instructions on how to set up the language server client and keybinds.
+### Isabelle Binary
+
+If you don't have `isabelle` on PATH, you can set the binary's path explicitly:
+```lua
+require('isabelle-lsp').setup({
+    isabelle_path = '/path/to/isabelle/bin/isabelle'
+})
+```
 
 ### Vertical Split instead of Horizontal Split
 
-If you want to open a vertical split instead of a horizontal split when you open an Isabelle file, you can specify so in the setup:
+If you want to open a vertical split instead of a horizontal split when you open a theory file, you can specify so in the setup:
 ```lua
 require('isabelle-lsp').setup({
     vsplit = true,
@@ -103,7 +96,7 @@ require('isabelle-lsp').setup({
 })
 ```
 
-Additionally, if you want to convert the current buffer from ascii to unicode representations, you can use the `:SymbolsConvert` command.
+Additionally, if you want to convert the current buffer to your set representation, you can use the `:SymbolsConvert` command.
 
 ### Font
 
@@ -146,7 +139,7 @@ require('isabelle-lsp').setup({
         ['text_overview_error'] = false,
         ['text_overview_warning'] = false,
         ['dotted_writeln'] = false,
-        ['dotted_warning'] = "DiagnosticWarn",
+        ['dotted_warning'] = 'DiagnosticWarn',
         ['dotted_information'] = false,
         ['spell_checker'] = 'Underlined',
         ['text_inner_cartouche'] = false,
