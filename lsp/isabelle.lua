@@ -151,6 +151,127 @@ local function state_init(client, state_buffers)
     end)
 end
 
+-- Parse $ISABELLE_HOME/etc/symbols and return a table mapping each
+-- \<name> symbol to its best ASCII abbreviation (the last listed abbrev
+-- that does not contain a dot, which are jEdit cursor-position patterns).
+local function load_symbol_abbrevs()
+    local result = {}
+    local home = vim.fn.system(
+        vim.fn.shellescape(config.isabelle_path) .. ' getenv -b ISABELLE_HOME 2>/dev/null'
+    ):gsub('%s+$', '')
+    if home == '' then return result end
+
+    local f = io.open(home .. '/etc/symbols', 'r')
+    if not f then return result end
+
+    for line in f:lines() do
+        local sym = line:match('^(\\<[^>]+>)')
+        if sym then
+            local best
+            for abbrev in line:gmatch('abbrev:%s*(%S+)') do
+                if not abbrev:find('.', 1, true) then
+                    best = abbrev
+                end
+            end
+            if best then result[sym] = best end
+        end
+    end
+    f:close()
+    return result
+end
+
+-- Maps \<symbol> notation to its ASCII abbreviation, e.g. \<Longrightarrow> -> ==>.
+-- Built once at startup by parsing $ISABELLE_HOME/etc/symbols.
+local symbol_to_abbrev = load_symbol_abbrevs()
+
+-- Translate an original (server-side) column to its post-substitution column.
+-- line_subs is the sorted list of substitution records for the line.
+local function col_adjust(line_subs, orig_col)
+    local adj = 0
+    for _, sub in ipairs(line_subs) do
+        if orig_col < sub.col_start then
+            break
+        elseif orig_col < sub.col_end then
+            -- Inside a substituted symbol: clamp to the symbol's new start.
+            return sub.col_start + adj
+        else
+            adj = adj + (sub.new_len - (sub.col_end - sub.col_start))
+        end
+    end
+    return orig_col + adj
+end
+
+-- Replace \<symbol> notation in content with ASCII abbreviations.
+-- Also returns subs: a table keyed by 0-based line number, each value a sorted
+-- list of {col_start, col_end, new_len} records needed to remap decoration positions.
+local function symbols_to_abbrevs(content)
+    local result  = {}
+    local subs    = { [0] = {} }
+    local line_num = 0
+    local orig_col = 0   -- 0-based column in the current line (original text)
+    local pos      = 1   -- 1-based Lua byte position in content
+
+    while pos <= #content do
+        local sym_s, sym_e, sym_name = content:find('\\<([^>]+)>', pos)
+        local nl = content:find('\n', pos, true)
+
+        local event
+        if sym_s and (not nl or sym_s < nl) then
+            event = 'sym'
+        elseif nl then
+            event = 'nl'
+        else
+            event = 'end'
+        end
+
+        if event == 'sym' then
+            result[#result + 1] = content:sub(pos, sym_s - 1)
+            orig_col = orig_col + (sym_s - pos)
+
+            local sym    = '\\<' .. sym_name .. '>'
+            local abbrev = symbol_to_abbrev[sym] or sym
+            result[#result + 1] = abbrev
+
+            subs[line_num][#subs[line_num] + 1] = {
+                col_start = orig_col,
+                col_end   = orig_col + (sym_e - sym_s + 1),
+                new_len   = #abbrev,
+            }
+
+            orig_col = orig_col + (sym_e - sym_s + 1)
+            pos      = sym_e + 1
+
+        elseif event == 'nl' then
+            result[#result + 1] = content:sub(pos, nl)
+            line_num = line_num + 1
+            orig_col = 0
+            pos      = nl + 1
+            subs[line_num] = {}
+
+        else -- 'end'
+            result[#result + 1] = content:sub(pos)
+            break
+        end
+    end
+
+    return table.concat(result), subs
+end
+
+-- Like apply_decoration but remaps column positions through subs before use.
+local function apply_output_decoration(bufnr, hl_group, ns, dec_content, subs)
+    local adjusted = {}
+    for _, range in ipairs(dec_content) do
+        local sl, sc, el, ec = range.range[1], range.range[2], range.range[3], range.range[4]
+        adjusted[#adjusted + 1] = {
+            range = {
+                sl, col_adjust(subs[sl] or {}, sc),
+                el, col_adjust(subs[el] or {}, ec),
+            }
+        }
+    end
+    apply_decoration(bufnr, hl_group, ns, adjusted)
+end
+
 local hl_group_namespace_map, output_namespace = utils.init_namespaces(config)
 local cmd = utils.init_cmd(config)
 
@@ -170,9 +291,10 @@ return {
         ['PIDE/dynamic_output'] = function(_, params, _, _)
             if not output_buffer then return end
 
+            local converted, subs = symbols_to_abbrevs(params.content)
             local lines = {}
             -- this regex makes sure that empty lines are still kept
-            for s in params.content:gmatch('([^\r\n]*)\n?') do
+            for s in converted:gmatch('([^\r\n]*)\n?') do
                 table.insert(lines, s)
             end
             vim.api.nvim_buf_set_lines(output_buffer, 0, -1, false, lines)
@@ -192,7 +314,7 @@ return {
                 -- if hl_group is false, it just means there is no highlighting done for this group
                 if hl_group == false then goto continue end
 
-                apply_decoration(output_buffer, hl_group, output_namespace, dec.content)
+                apply_output_decoration(output_buffer, hl_group, output_namespace, dec.content, subs)
 
                 ::continue::
             end
@@ -229,9 +351,10 @@ return {
             local id = params.id
             local buf = state_buffers[id]
 
+            local converted, subs = symbols_to_abbrevs(params.content)
             local lines = {}
             -- this regex makes sure that empty lines are still kept
-            for s in params.content:gmatch('([^\r\n]*)\n?') do
+            for s in converted:gmatch('([^\r\n]*)\n?') do
                 table.insert(lines, s)
             end
             vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
@@ -252,7 +375,7 @@ return {
                 -- if hl_group is false, it just means there is no highlighting done for this group
                 if hl_group == false then goto continue end
 
-                apply_decoration(buf, hl_group, output_namespace, dec.content)
+                apply_output_decoration(buf, hl_group, output_namespace, dec.content, subs)
 
                 ::continue::
             end
