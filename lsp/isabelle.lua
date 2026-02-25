@@ -163,6 +163,10 @@ return {
     filetypes = { 'isabelle' },
     root_markers = { 'ROOT', '.git', '.hg' },
     handlers = {
+        ['window/showMessage'] = function(err, params, ctx, config_)
+            if params.message:match('Welcome to Isabelle') then return end
+            vim.lsp.handlers['window/showMessage'](err, params, ctx, config_)
+        end,
         ['PIDE/dynamic_output'] = function(_, params, _, _)
             if not output_buffer then return end
 
